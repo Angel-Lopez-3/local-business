@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model audit_logs {
+  id            BigInt                    @id @default(autoincrement()) @db.UnsignedBigInt
+  table_name    String                    @db.VarChar(100)
+  action_type   audit_logs_action_type
+  record_id     BigInt?                   @db.UnsignedBigInt
+  old_values    Json?
+  new_values    Json?
+  action_status audit_logs_action_status? @default(SUCCESS)
+  error_message String?                   @db.Text
+  created_at    DateTime?                 @default(now()) @db.Timestamp(0)
+}
+
+model business_images {
+  id          BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  business_id BigInt     @db.UnsignedBigInt
+  image_url   String     @db.VarChar(255)
+  created_at  DateTime?  @default(now()) @db.Timestamp(0)
+  businesses  businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, map: "fk_business_images_business")
+
+  @@index([business_id], map: "fk_business_images_business")
+}
+
+model businesses {
+  id                                  BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id                             BigInt            @db.UnsignedBigInt
+  category_id                         BigInt            @db.UnsignedBigInt
+  sector_id                           BigInt            @db.UnsignedBigInt
+  name                                String            @db.VarChar(150)
+  slug                                String            @unique(map: "slug") @db.VarChar(180)
+  description                         String            @db.Text
+  phone                               String?           @db.VarChar(20)
+  whatsapp                            String?           @db.VarChar(20)
+  email                               String?           @db.VarChar(150)
+  address                             String?           @db.VarChar(255)
+  logo                                String?           @db.VarChar(255)
+  cover_image                         String?           @db.VarChar(255)
+  website                             String?           @db.VarChar(255)
+  facebook                            String?           @db.VarChar(255)
+  instagram                           String?           @db.VarChar(255)
+  working_hours                       String?           @db.Text
+  latitude                            Decimal?          @db.Decimal(10, 7)
+  longitude                           Decimal?          @db.Decimal(10, 7)
+  is_verified                         Boolean?          @default(false)
+  is_active                           Boolean?          @default(true)
+  approved_by                         BigInt?           @db.UnsignedBigInt
+  approved_at                         DateTime?         @db.DateTime(0)
+  created_at                          DateTime?         @default(now()) @db.Timestamp(0)
+  updated_at                          DateTime?         @default(now()) @db.Timestamp(0)
+  business_images                     business_images[]
+  users_businesses_approved_byTousers users?            @relation("businesses_approved_byTousers", fields: [approved_by], references: [id], map: "fk_businesses_approved_by")
+  categories                          categories        @relation(fields: [category_id], references: [id], map: "fk_businesses_category")
+  sectors                             sectors           @relation(fields: [sector_id], references: [id], map: "fk_businesses_sector")
+  users_businesses_user_idTousers     users             @relation("businesses_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, map: "fk_businesses_user")
+  favorites                           favorites[]
+  reports                             reports[]
+  review_replies                      review_replies[]
+  reviews                             reviews[]
+  services                            services[]
+
+  @@index([approved_by], map: "fk_businesses_approved_by")
+  @@index([user_id], map: "fk_businesses_user")
+  @@index([category_id], map: "idx_businesses_category")
+  @@index([name], map: "idx_businesses_name")
+  @@index([sector_id], map: "idx_businesses_sector")
+  @@index([is_verified], map: "idx_businesses_verified")
+}
+
+model categories {
+  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String       @unique(map: "name") @db.VarChar(100)
+  slug       String       @unique(map: "slug") @db.VarChar(120)
+  icon       String?      @db.VarChar(255)
+  is_active  Boolean?     @default(true)
+  created_at DateTime?    @default(now()) @db.Timestamp(0)
+  businesses businesses[]
+}
+
+model favorites {
+  user_id     BigInt     @db.UnsignedBigInt
+  business_id BigInt     @db.UnsignedBigInt
+  created_at  DateTime?  @default(now()) @db.Timestamp(0)
+  businesses  businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, map: "fk_favorites_business")
+  users       users      @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_favorites_user")
+
+  @@id([user_id, business_id])
+  @@index([business_id], map: "fk_favorites_business")
+}
+
+model password_resets {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id    BigInt    @db.UnsignedBigInt
+  token      String    @db.VarChar(255)
+  expires_at DateTime  @db.DateTime(0)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_password_resets_user")
+
+  @@index([user_id], map: "fk_password_resets_user")
+}
+
+model refresh_tokens {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id    BigInt    @db.UnsignedBigInt
+  token      String    @db.Text
+  ip_address String?   @db.VarChar(45)
+  user_agent String?   @db.Text
+  expires_at DateTime  @db.DateTime(0)
+  revoked    Boolean?  @default(false)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_refresh_tokens_user")
+
+  @@index([user_id], map: "fk_refresh_tokens_user")
+}
+
+model reports {
+  id               BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  reporter_user_id BigInt          @db.UnsignedBigInt
+  business_id      BigInt?         @db.UnsignedBigInt
+  review_id        BigInt?         @db.UnsignedBigInt
+  reason           String          @db.Text
+  status           reports_status? @default(pending)
+  created_at       DateTime?       @default(now()) @db.Timestamp(0)
+  businesses       businesses?     @relation(fields: [business_id], references: [id], map: "fk_reports_business")
+  reviews          reviews?        @relation(fields: [review_id], references: [id], map: "fk_reports_review")
+  users            users           @relation(fields: [reporter_user_id], references: [id], onDelete: Cascade, map: "fk_reports_user")
+
+  @@index([business_id], map: "fk_reports_business")
+  @@index([review_id], map: "fk_reports_review")
+  @@index([reporter_user_id], map: "fk_reports_user")
+}
+
+model review_replies {
+  id          BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  review_id   BigInt     @db.UnsignedBigInt
+  business_id BigInt     @db.UnsignedBigInt
+  message     String     @db.Text
+  created_at  DateTime?  @default(now()) @db.Timestamp(0)
+  businesses  businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, map: "fk_review_replies_business")
+  reviews     reviews    @relation(fields: [review_id], references: [id], onDelete: Cascade, map: "fk_review_replies_review")
+
+  @@index([business_id], map: "fk_review_replies_business")
+  @@index([review_id], map: "fk_review_replies_review")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reviews {
+  id             BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id        BigInt           @db.UnsignedBigInt
+  business_id    BigInt           @db.UnsignedBigInt
+  rating         Int              @db.UnsignedTinyInt
+  comment        String?          @db.Text
+  is_visible     Boolean?         @default(true)
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(0)
+  reports        reports[]
+  review_replies review_replies[]
+  businesses     businesses       @relation(fields: [business_id], references: [id], onDelete: Cascade, map: "fk_reviews_business")
+  users          users            @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_reviews_user")
+
+  @@unique([user_id, business_id], map: "uq_reviews_user_business")
+  @@index([business_id], map: "idx_reviews_business")
+  @@index([user_id], map: "idx_reviews_user")
+}
+
+model roles {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String    @unique(map: "name") @db.VarChar(50)
+  description String?   @db.VarChar(255)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  users       users[]
+}
+
+model sectors {
+  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String       @db.VarChar(100)
+  city       String?      @db.VarChar(100)
+  created_at DateTime?    @default(now()) @db.Timestamp(0)
+  businesses businesses[]
+
+  @@unique([name, city], map: "uk_sector_city")
+}
+
+model services {
+  id          BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  business_id BigInt     @db.UnsignedBigInt
+  name        String     @db.VarChar(150)
+  description String?    @db.Text
+  price       Decimal?   @db.Decimal(10, 2)
+  is_active   Boolean?   @default(true)
+  created_at  DateTime?  @default(now()) @db.Timestamp(0)
+  businesses  businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, map: "fk_services_business")
+
+  @@index([business_id], map: "fk_services_business")
+}
+
+model users {
+  id                                       BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  role_id                                  BigInt            @db.UnsignedBigInt
+  first_name                               String            @db.VarChar(100)
+  last_name                                String            @db.VarChar(100)
+  email                                    String            @unique(map: "email") @db.VarChar(150)
+  password                                 String            @db.VarChar(255)
+  phone                                    String?           @db.VarChar(20)
+  profile_photo                            String?           @db.VarChar(255)
+  email_verified                           Boolean?          @default(false)
+  is_active                                Boolean?          @default(true)
+  last_login                               DateTime?         @db.Timestamp(0)
+  created_at                               DateTime?         @default(now()) @db.Timestamp(0)
+  updated_at                               DateTime?         @default(now()) @db.Timestamp(0)
+  businesses_businesses_approved_byTousers businesses[]      @relation("businesses_approved_byTousers")
+  businesses_businesses_user_idTousers     businesses[]      @relation("businesses_user_idTousers")
+  favorites                                favorites[]
+  password_resets                          password_resets[]
+  refresh_tokens                           refresh_tokens[]
+  reports                                  reports[]
+  reviews                                  reviews[]
+  roles                                    roles             @relation(fields: [role_id], references: [id], map: "fk_users_role")
+
+  @@index([role_id], map: "fk_users_role")
+  @@index([email], map: "idx_users_email")
+}
+
+enum audit_logs_action_type {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+enum reports_status {
+  pending
+  reviewed
+  resolved
+}
+
+enum audit_logs_action_status {
+  SUCCESS
+  FAILED
+}

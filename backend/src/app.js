@@ -11,6 +11,11 @@ import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import sectorRoutes from "./routes/sector.routes.js";
 import businessRoutes from "../src/routes/business.routes.js";
+import businessImageRoutes from "../src/routes/business-image.routes.js";
+import favoriteRoutes from "./routes/favorite.routes.js";
+import reviewsRoutes from "./routes/review.routes.js";
+import reportRoutes from "./routes/report.routes.js";
+import serviceRoutes from "./routes/service.routes.js";
 
 import { errorHandler } from "./middlewares/error.middleware.js";
 
@@ -27,7 +32,7 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 |   1n -> "1"
 */
 BigInt.prototype.toJSON = function () {
-    return this.toString();
+   return this.toString();
 };
 
 /*
@@ -77,10 +82,10 @@ app.use(helmet());
 |   Permite envío de cookies y credenciales.
 */
 app.use(
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-    })
+   cors({
+      origin: "http://localhost:5173",
+      credentials: true,
+   })
 );
 
 /*
@@ -140,13 +145,13 @@ app.use(cookieParser());
 | /uploads/users/profiles/foto.jpg
 */
 app.use(
-    "/uploads",
-    express.static(
-        path.join(
-            process.cwd(),
-            "uploads"
-        )
-    )
+   "/uploads",
+   express.static(
+      path.join(
+         process.cwd(),
+         "uploads"
+      )
+   )
 );
 
 /*
@@ -166,6 +171,13 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/sectors", sectorRoutes);
 
 app.use("/api/businesses", businessRoutes);
+app.use("/api/business-images", businessImageRoutes);
+app.use("/api/favorites",favoriteRoutes);
+app.use("/api/reviews", reviewsRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/services",serviceRoutes);
+
+
 
 /*
 |--------------------------------------------------------------------------

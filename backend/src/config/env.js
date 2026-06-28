@@ -26,7 +26,7 @@ export const env = {
     nodeEnv: process.env.NODE_ENV || "development",
     resendApiKey: process.env.RESEND_API_KEY,
 
-    uploadMaxSize: process.env.UPLOAD_MAX_SIZE || 5242880, // 5MB en bytes
+    UPLOAD_MAX_SIZE: process.env.UPLOAD_MAX_SIZE || 5242880, // 5MB en bytes
 };
 
 // console.log("ENV OBJ:", env);

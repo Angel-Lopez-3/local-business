@@ -244,8 +244,7 @@ const businessStorage =
 
     });
 
-export const uploadBusinessImages =
-    multer({
+export const uploadBusinessImages = multer({
 
         storage:
             businessStorage,
@@ -274,3 +273,25 @@ export const uploadBusinessImages =
         },
 
     ]);
+
+
+export const uploadBusinessGallery =
+    multer({
+
+        storage:
+            createStorage(
+                "uploads/businesses/gallery"
+            ),
+
+        fileFilter:
+            imageFilter,
+
+        limits: {
+
+            fileSize:
+                env.UPLOAD_MAX_SIZE
+                || 5 * 1024 * 1024,
+
+        },
+
+    });

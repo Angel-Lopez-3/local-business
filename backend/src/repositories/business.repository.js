@@ -290,4 +290,37 @@ async () => {
 
     });
 
+    };
+
+
+export const findBusinessByIdWithOwner =
+async (
+    id
+) => {
+
+    return await prisma.businesses.findUnique({
+
+        where: {
+
+            id:
+                BigInt(id)
+
+        },
+
+        include: {
+
+            users_businesses_user_idTousers: {
+
+                include: {
+
+                    roles: true
+
+                }
+
+            }
+
+        }
+
+    });
+
 };

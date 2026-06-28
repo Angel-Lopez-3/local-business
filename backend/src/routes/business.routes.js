@@ -21,7 +21,8 @@ import {
     unverifyBusiness,
     activateBusiness,
     deactivateBusiness,
-    getAllBusinesses
+    getAllBusinesses,
+    deleteBusiness,
 } from "../controllers/business.controller.js";
 
 const router = Router();
@@ -308,7 +309,7 @@ router.patch(
 router.patch(
     "/:id/activate",
     authenticate,
-    authorizeRoles("admin"),
+    authorizeRoles("admin","business"),
     activateBusiness
 );
 
@@ -333,8 +334,29 @@ router.patch(
 router.patch(
     "/:id/deactivate",
     authenticate,
-    authorizeRoles("admin"),
+    authorizeRoles("admin","business"),
     deactivateBusiness
+);
+
+/*
+|--------------------------------------------------------------------------
+| Eliminar un negocio junto con todos sus datos relacionados.
+| Acceso: Admin o propietario del negocio.
+|--------------------------------------------------------------------------
+*/
+router.delete(
+
+    "/:id",
+
+    authenticate,
+
+    authorizeRoles(
+        "business",
+        "admin"
+    ),
+
+    deleteBusiness
+
 );
 
 export default router;

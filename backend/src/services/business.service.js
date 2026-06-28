@@ -1,4 +1,7 @@
 import slugify from "slugify";
+import prisma
+from "../config/db.js";
+
 
 import { AppError }
 from "../utils/AppError.js";
@@ -14,7 +17,7 @@ import {
     unverifyBusiness,
     activateBusiness,
     deactivateBusiness,
-    findAllBusinesses,
+    findAllBusinesses,findBusinessByIdWithOwner,
 }
     from "../repositories/business.repository.js";
 
@@ -445,7 +448,8 @@ async (
 
 export const activateBusinessService =
 async (
-    businessId
+    businessId,
+    currentUser
 ) => {
 
     const business =
@@ -458,6 +462,34 @@ async (
         throw new AppError(
             "Business not found",
             404
+        );
+
+    }
+    if (business.is_active) {
+
+    throw new AppError(
+        "Business is already inactive",
+        400
+    );
+
+}
+
+    if (
+
+        currentUser.roles.name ===
+        "business"
+
+        &&
+
+        business.user_id.toString()
+        !==
+        currentUser.id.toString()
+
+    ) {
+
+        throw new AppError(
+            "Forbidden",
+            403
         );
 
     }
@@ -466,11 +498,12 @@ async (
         businessId
     );
 
-    };
+};
 
 export const deactivateBusinessService =
 async (
-    businessId
+    businessId,
+    currentUser
 ) => {
 
     const business =
@@ -486,17 +519,277 @@ async (
         );
 
     }
+    if (!business.is_active) {
+
+    throw new AppError(
+        "Business is already inactive",
+        400
+    );
+
+}
+
+    
+
+    if (
+
+        currentUser.roles.name ===
+        "business"
+
+        &&
+
+        business.user_id.toString()
+        !==
+        currentUser.id.toString()
+
+    ) {
+
+        throw new AppError(
+            "Forbidden",
+            403
+        );
+
+    }
 
     return await deactivateBusiness(
         businessId
     );
 
-    };
-
+};
 
 export const getAllBusinessesService =
 async () => {
 
     return await findAllBusinesses();
+
+    };
+
+
+export const deleteBusinessService =
+async (
+    businessId,
+    currentUser
+) => {
+
+    const business =
+        await findBusinessByIdWithOwner(
+            businessId
+        );
+
+    if (!business) {
+
+        throw new AppError(
+            "Business not found",
+            404
+        );
+
+    }
+
+    if (
+
+        currentUser.roles.name ===
+        "business"
+
+        &&
+
+        business.user_id.toString()
+        !==
+        currentUser.id.toString()
+
+    ) {
+
+        throw new AppError(
+            "Forbidden",
+            403
+        );
+
+    }
+
+    const userRole =
+        await findRoleByName(
+            "user"
+        );
+
+    await prisma.$transaction(
+
+        async (
+            tx
+        ) => {
+
+            await tx.reports.deleteMany({
+
+                where: {
+
+                    business_id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+
+            const reviews =
+                await tx.reviews.findMany({
+
+                    where: {
+
+                        business_id:
+                            BigInt(
+                                businessId
+                            )
+
+                    },
+
+                    select: {
+
+                        id: true
+
+                    }
+
+                });
+
+            const reviewIds =
+                reviews.map(
+
+                    review =>
+                        review.id
+
+                );
+
+            if (
+                reviewIds.length
+            ) {
+
+                await tx.reports.deleteMany({
+
+                    where: {
+
+                        review_id: {
+
+                            in:
+                                reviewIds
+
+                        }
+
+                    }
+
+                });
+
+            }
+
+            await tx.review_replies.deleteMany({
+
+                where: {
+
+                    business_id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+
+            await tx.reviews.deleteMany({
+
+                where: {
+
+                    business_id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+
+            await tx.services.deleteMany({
+
+                where: {
+
+                    business_id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+            
+            await tx.favorites.deleteMany({
+
+                where: {
+
+                    business_id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+
+            await tx.business_images.deleteMany({
+
+                where: {
+
+                    business_id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+
+            await tx.businesses.delete({
+
+                where: {
+
+                    id:
+                        BigInt(
+                            businessId
+                        )
+
+                }
+
+            });
+
+            if (
+
+                business
+                    .users_businesses_user_idTousers
+                    .roles
+                    .name
+                ===
+                "business"
+
+            ) {
+
+                await tx.users.update({
+
+                    where: {
+
+                        id:
+                            business.user_id
+
+                    },
+
+                    data: {
+
+                        role_id:
+                            userRole.id
+
+                    }
+
+                });
+
+            }
+
+        }
+
+    );
+
+    return business;
 
 };

@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { getSectorsRequest } from "../../api/sectorApi";
+import { PageHeader } from "../../components/form";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import EmptyState from "../../components/EmptyState";
+import { IconMapPin } from "../../components/icons";
 
 export default function Sectors() {
+  const navigate = useNavigate();
   const [sectors, setSectors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadSectors();
@@ -10,53 +18,46 @@ export default function Sectors() {
 
   const loadSectors = async () => {
     try {
-      const response =
-        await getSectorsRequest();
-
+      const response = await getSectorsRequest();
       setSectors(response.data.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (loading) return <LoadingSpinner />;
+
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">
-        Sectores
-      </h1>
+      <PageHeader
+        eyebrow="Explorar"
+        title="Sectores"
+        description="Negocios organizados por zona geografica."
+      />
 
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-100">
-            <tr>
-              <th className="p-4 text-left">
-                ID
-              </th>
-
-              <th className="p-4 text-left">
-                Nombre
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {sectors.map((sector) => (
-              <tr
-                key={sector.id}
-                className="border-t"
-              >
-                <td className="p-4">
-                  {sector.id}
-                </td>
-
-                <td className="p-4">
-                  {sector.name}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {sectors.length === 0 ? (
+        <EmptyState icon={<IconMapPin className="h-6 w-6" />} title="No hay sectores disponibles" />
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sectors.map((sector) => (
+            <button
+              key={sector.id}
+              onClick={() => navigate(`/businesses?sector=${sector.id}`)}
+              className="card-surface p-5 text-left hover:shadow-md hover:-translate-y-0.5 transition flex items-center gap-4"
+            >
+              <div className="h-11 w-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                <IconMapPin className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-display font-semibold text-ink-900">{sector.name}</p>
+                <p className="text-sm text-ink-500">{sector.city}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

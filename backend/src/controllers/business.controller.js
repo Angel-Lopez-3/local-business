@@ -10,6 +10,7 @@ import {
     activateBusinessService,
     deactivateBusinessService,
     getAllBusinessesService,
+    deleteBusinessService,
 }
 from "../services/business.service.js";
 
@@ -319,7 +320,8 @@ async (
 
     const business =
         await activateBusinessService(
-            req.params.id
+            req.params.id,
+            req.user
         );
 
     return successResponse(
@@ -345,7 +347,8 @@ async (
 
     const business =
         await deactivateBusinessService(
-            req.params.id
+            req.params.id,
+            req.user
         );
 
     return successResponse(
@@ -356,6 +359,7 @@ async (
 
         businessMapper(
             business
+
         )
 
     );
@@ -385,4 +389,50 @@ async (
 
     );
 
-});
+    });
+
+export const deleteBusiness =
+async (
+    req,
+    res,
+    next
+) => {
+
+    try {
+
+        const business =
+            await deleteBusinessService(
+
+                req.params.id,
+
+                req.user
+
+            );
+
+        res.json({
+
+            success: true,
+
+            message:
+                "Business deleted successfully",
+
+            data:
+                businessMapper(
+                    business
+                )
+
+        });
+
+    }
+
+    catch (
+        error
+    ) {
+
+        next(
+            error
+        );
+
+    }
+
+};

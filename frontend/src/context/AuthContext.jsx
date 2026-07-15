@@ -7,17 +7,30 @@ import {
   meRequest,
 } from "../api/authApi";
 
-const AuthContext = createContext();
+import { ROLES } from "../utils/roles";
+
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-
   const [loading, setLoading] = useState(true);
+
+  const checkAuth = async () => {
+    try {
+      const response = await meRequest();
+      setUser(response.data.data);
+      return response.data.data;
+    } catch (error) {
+      setUser(null);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (credentials) => {
     await loginRequest(credentials);
-
-    await checkAuth();
+    return await checkAuth();
   };
 
   const register = async (userData) => {
@@ -30,28 +43,15 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error(error);
     }
-
     setUser(null);
-  };
-
-  const checkAuth = async () => {
-    try {
-      const response = await meRequest();
-
-      setUser(response.data.data);
-
-      return response.data.data;
-    } catch (error) {
-      setUser(null);
-      return null;
-    } finally {
-      setLoading(false);
-    }
   };
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  const isAdmin = user?.role?.name === ROLES.ADMIN;
+  const isBusiness = user?.role?.name === ROLES.BUSINESS;
 
   return (
     <AuthContext.Provider
@@ -63,6 +63,8 @@ export function AuthProvider({ children }) {
         register,
         logout,
         checkAuth,
+        isAdmin,
+        isBusiness,
       }}
     >
       {children}
@@ -70,6 +72,4 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

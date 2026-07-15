@@ -16,6 +16,7 @@ import favoriteRoutes from "./routes/favorite.routes.js";
 import reviewsRoutes from "./routes/review.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 import { errorHandler } from "./middlewares/error.middleware.js";
 
@@ -175,7 +176,8 @@ app.use("/api/business-images", businessImageRoutes);
 app.use("/api/favorites",favoriteRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/reports", reportRoutes);
-app.use("/api/services",serviceRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/dashboard",dashboardRoutes);
 
 
 
